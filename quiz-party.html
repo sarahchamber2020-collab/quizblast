@@ -489,7 +489,7 @@
   <!-- ════════════════ HOME ════════════════ -->
   <div id="home-screen" class="screen active">
     <div class="logo">QuizBlast</div>
-    <div class="tagline">🎉 派对答题 · 多人实时 · 笑翻全场</div>
+    <div class="tagline">🎉 派对答题 · 多人实时</div>
 
     <div class="card">
       <div class="card-title">🎮 创建房间 (Host)</div>
@@ -500,14 +500,14 @@
       <div class="form-group">
         <label>游戏模式</label>
         <div class="mode-grid">
-          <button class="mode-btn active" data-mode="standard" onclick="selectMode(this)">
+          <button class="mode-btn active" data-mode="random" onclick="selectMode(this)">
+            <span class="mode-icon">🤪</span>随机模式
+          </button>
+          <button class="mode-btn" data-mode="standard" onclick="selectMode(this)">
             <span class="mode-icon">🎯</span>标准模式
           </button>
           <button class="mode-btn" data-mode="bar" onclick="selectMode(this)">
             <span class="mode-icon">🍻</span>酒吧模式
-          </button>
-          <button class="mode-btn" data-mode="random" onclick="selectMode(this)">
-            <span class="mode-icon">🤪</span>随机模式
           </button>
         </div>
       </div>
@@ -800,6 +800,11 @@ function onRoomChange(rs) {
       showQuestionUI(rs);
     } else {
       syncQuestionUI(rs);
+    }
+    // 房主监听：只要有状态更新就检查是否全员答完，是则立即出结果
+    if (me.isHost && Object.values(rs.players||{}).length > 0 &&
+        Object.values(rs.players||{}).every(p => p._ans >= 0)) {
+      triggerResult(rs);
     }
   } else if (phase === 'result' && lastPhase !== 'result') {
     showResultUI(rs);
