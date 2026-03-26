@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>QuizBlast 🎉 派对答题</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Bangers&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d1a;
+    --card: #161628;
+    --card2: #1e1e38;
+    --border: #2a2a50;
+    --accent1: #ff4da6;
+    --accent2: #7c3aed;
+    --accent3: #00d4ff;
+    --accent4: #ffb800;
+    --green: #00e676;
+    --red: #ff3d57;
+    --text: #f0f0ff;
+    --muted: #8888aa;
+    --radius: 16px;
+    --shadow: 0 8px 40px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(124,58,237,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(255,77,166,0.1) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #app { position: relative; z-index: 1; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  .screen.active { display: flex; }
+
+  /* ── HOME ── */
+  .logo {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(3rem, 12vw, 6rem);
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    line-height: 1;
+    filter: drop-shadow(0 0 30px rgba(255,77,166,0.4));
+    animation: pulse-logo 3s ease-in-out infinite;
+  }
+  @keyframes pulse-logo {
+    0%,100% { filter: drop-shadow(0 0 30px rgba(255,77,166,0.4)); }
+    50% { filter: drop-shadow(0 0 60px rgba(124,58,237,0.6)); }
+  }
+  .tagline { color: var(--muted); font-size: 1.1rem; margin: 8px 0 40px; text-align: center; font-weight: 700; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%; max-width: 440px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 1.3rem; font-weight: 900; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  /* ── INPUTS ── */
+  input, select {
+    width: 100%;
+    background: var(--card2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem; font-weight: 700;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    margin-bottom: 14px;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(124,58,237,0.2);
+  }
+  input::placeholder { color: var(--muted); font-weight: 400; }
+  select option { background: var(--card); }
+  label { display: block; font-size: .85rem; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .form-group { margin-bottom: 4px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 16px;
+    border: none; border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem; font-weight: 900;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s, filter .15s;
+    letter-spacing: .5px;
+    position: relative; overflow: hidden;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,77,166,0.4);
+    margin-bottom: 12px;
+  }
+  .btn-primary:hover { filter: brightness(1.1); box-shadow: 0 6px 30px rgba(255,77,166,0.6); }
+  .btn-secondary {
+    background: var(--card2);
+    color: var(--text);
+    border: 2px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .btn-secondary:hover { border-color: var(--accent3); color: var(--accent3); }
+  .btn-green {
+    background: linear-gradient(135deg, #00c853, #00e676);
+    color: #000;
+    box-shadow: 0 4px 20px rgba(0,230,118,0.35);
+    margin-bottom: 12px;
+  }
+  .btn-danger {
+    background: linear-gradient(135deg, #e53935, #ff3d57);
+    color: #fff;
+    margin-bottom: 12px;
+  }
+  .btn-small {
+    padding: 10px 16px; font-size: .9rem;
+    width: auto; border-radius: 10px;
+  }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+  .btn-ripple::after {
+    content: '';
+    position: absolute;
+    width: 200%; height: 200%;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: ripple .4s ease-out forwards;
+  }
+  @keyframes ripple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+
+  /* ── DIVIDER ── */
+  .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--muted); font-size: .85rem; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── LOBBY ── */
+  .room-code-display {
+    text-align: center;
+    background: linear-gradient(135deg, var(--accent2), var(--accent1));
+    border-radius: 16px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+  .room-code-display .label { color: rgba(255,255,255,0.7); font-size: .9rem; margin-bottom: 4px; font-weight: 700; }
+  .room-code-display .code {
+    font-family: 'Bangers', cursive;
+    font-size: 3.5rem; letter-spacing: 12px;
+    color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    line-height: 1;
+  }
+
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .player-chip {
+    background: var(--card2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    font-weight: 800;
+    font-size: .9rem;
+    animation: pop-in .3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .player-chip .avatar { font-size: 1.8rem; margin-bottom: 4px; }
+  .player-chip.host { border-color: var(--accent4); }
+  @keyframes pop-in {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── GAME HEADER ── */
+  .game-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    width: 100%;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .q-progress { font-size: .85rem; font-weight: 800; color: var(--muted); }
+  .score-badge {
+    background: linear-gradient(135deg, var(--accent2), var(--accent1));
+    padding: 6px 14px; border-radius: 20px;
+    font-weight: 900; font-size: .9rem;
+  }
+
+  /* ── TIMER ── */
+  .timer-ring-wrap {
+    display: flex; align-items: center; justify-content: center;
+    margin: 16px 0;
+  }
+  .timer-ring {
+    position: relative;
+    width: 90px; height: 90px;
+  }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring circle { fill: none; stroke-width: 8; stroke-linecap: round; }
+  .timer-ring .bg { stroke: var(--card2); }
+  .timer-ring .fg { stroke: var(--accent3); transition: stroke-dashoffset .5s linear, stroke .5s; }
+  .timer-number {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Bangers', cursive;
+    font-size: 2rem; letter-spacing: 1px;
+  }
+
+  /* ── QUESTION ── */
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    width: 100%; max-width: 600px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .question-category {
+    display: inline-block;
+    background: rgba(124,58,237,0.2);
+    border: 1px solid rgba(124,58,237,0.4);
+    color: var(--accent3);
+    font-size: .75rem; font-weight: 800;
+    padding: 4px 12px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+  .question-text {
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    font-weight: 800;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+
+  /* ── ANSWER OPTIONS ── */
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%; max-width: 600px;
+    margin-top: 16px;
+  }
+  @media (max-width: 400px) { .options-grid { grid-template-columns: 1fr; } }
+  .option-btn {
+    padding: 18px 14px;
+    border: 3px solid transparent;
+    border-radius: 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: clamp(.9rem, 3vw, 1.05rem);
+    font-weight: 800;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    line-height: 1.3;
+    min-height: 70px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .option-btn:nth-child(1) { background: rgba(255,77,166,0.15); border-color: rgba(255,77,166,0.4); color: #ff4da6; }
+  .option-btn:nth-child(2) { background: rgba(0,212,255,0.15); border-color: rgba(0,212,255,0.4); color: #00d4ff; }
+  .option-btn:nth-child(3) { background: rgba(255,184,0,0.15); border-color: rgba(255,184,0,0.4); color: #ffb800; }
+  .option-btn:nth-child(4) { background: rgba(0,230,118,0.15); border-color: rgba(0,230,118,0.4); color: #00e676; }
+  .option-btn:hover:not(:disabled) { transform: scale(1.03); filter: brightness(1.2); }
+  .option-btn.selected { transform: scale(1.05); filter: brightness(1.3) !important; }
+  .option-btn:nth-child(1).selected { background: rgba(255,77,166,0.4); border-color: #ff4da6; }
+  .option-btn:nth-child(2).selected { background: rgba(0,212,255,0.4); border-color: #00d4ff; }
+  .option-btn:nth-child(3).selected { background: rgba(255,184,0,0.4); border-color: #ffb800; }
+  .option-btn:nth-child(4).selected { background: rgba(0,230,118,0.4); border-color: #00e676; }
+  .option-btn.correct { background: rgba(0,230,118,0.3) !important; border-color: var(--green) !important; color: var(--green) !important; }
+  .option-btn.wrong { background: rgba(255,61,87,0.3) !important; border-color: var(--red) !important; color: var(--red) !important; opacity: .7; }
+  .option-btn:disabled { cursor: default; }
+
+  /* ── RESULTS OVERLAY ── */
+  .result-banner {
+    text-align: center;
+    padding: 20px;
+    border-radius: 20px;
+    margin: 16px 0;
+    width: 100%; max-width: 600px;
+    animation: slide-up .4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .result-banner.correct-banner { background: rgba(0,230,118,0.15); border: 2px solid var(--green); }
+  .result-banner.wrong-banner { background: rgba(255,61,87,0.15); border: 2px solid var(--red); }
+  .result-banner .big-icon { font-size: 3rem; margin-bottom: 8px; }
+  .result-banner .result-text { font-size: 1.2rem; font-weight: 900; }
+  .result-banner .points-gained { font-size: 1rem; color: var(--accent4); font-weight: 700; margin-top: 4px; }
+  @keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* ── ANSWER COUNT ── */
+  .answer-count {
+    font-size: .9rem; color: var(--muted); font-weight: 700;
+    text-align: center; margin: 8px 0;
+  }
+
+  /* ── LEADERBOARD ── */
+  .leaderboard { width: 100%; max-width: 500px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    animation: lb-slide .3s ease forwards;
+    opacity: 0;
+    transition: all .3s;
+  }
+  .lb-row:nth-child(1) { border-color: var(--accent4); background: rgba(255,184,0,0.1); animation-delay: .05s; }
+  .lb-row:nth-child(2) { border-color: #aaa; background: rgba(170,170,170,0.08); animation-delay: .1s; }
+  .lb-row:nth-child(3) { border-color: #cd7f32; background: rgba(205,127,50,0.08); animation-delay: .15s; }
+  @keyframes lb-slide { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .lb-rank { font-family: 'Bangers', cursive; font-size: 1.5rem; width: 36px; text-align: center; }
+  .lb-avatar { font-size: 1.6rem; }
+  .lb-name { flex: 1; font-weight: 800; font-size: 1rem; }
+  .lb-score { font-family: 'Bangers', cursive; font-size: 1.4rem; color: var(--accent4); }
+  .lb-delta { font-size: .8rem; font-weight: 800; color: var(--green); margin-left: 4px; }
+
+  /* ── WAITING ── */
+  .waiting-dots span {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent2);
+    margin: 0 3px;
+    animation: dot-bounce .8s ease-in-out infinite;
+  }
+  .waiting-dots span:nth-child(2) { animation-delay: .15s; background: var(--accent1); }
+  .waiting-dots span:nth-child(3) { animation-delay: .3s; background: var(--accent3); }
+  @keyframes dot-bounce { 0%,80%,100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: var(--card2); border: 1px solid var(--border);
+    padding: 12px 24px; border-radius: 100px;
+    font-weight: 700; font-size: .95rem;
+    opacity: 0; transition: opacity .3s;
+    z-index: 1000; pointer-events: none;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── CONFETTI ── */
+  .confetti-piece {
+    position: fixed;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 999;
+    animation: confetti-fall linear forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── MODE SELECTOR ── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .mode-btn {
+    padding: 12px 8px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: var(--card2);
+    color: var(--muted);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: .8rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all .2s;
+  }
+  .mode-btn .mode-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+  .mode-btn.active { border-color: var(--accent2); color: var(--text); background: rgba(124,58,237,0.2); }
+  .mode-btn:hover { border-color: var(--accent3); color: var(--text); }
+
+  /* ── MISC ── */
+  .section-gap { margin-bottom: 16px; }
+  .text-center { text-align: center; }
+  .text-muted { color: var(--muted); }
+  .flex-row { display: flex; gap: 10px; }
+  .flex-row .btn { margin-bottom: 0; }
+  h2 { font-size: 1.6rem; font-weight: 900; margin-bottom: 16px; text-align: center; }
+  .pill {
+    display: inline-block;
+    background: rgba(255,255,255,0.08);
+    border-radius: 100px;
+    padding: 4px 12px;
+    font-size: .8rem;
+    font-weight: 700;
+    margin: 2px;
+  }
+  .correct-answer-reveal {
+    text-align: center;
+    color: var(--green);
+    font-weight: 800;
+    font-size: 1rem;
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(0,230,118,0.1);
+    border-radius: 10px;
+  }
+  .waiting-text { font-size: 1.1rem; font-weight: 700; color: var(--muted); margin-bottom: 20px; text-align: center; }
+
+  /* ── FINAL SCREEN ── */
+  #final-screen .trophy { font-size: 5rem; text-align: center; animation: bounce 1s ease-in-out infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 40px; height: 40px;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    margin: 20px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { text-align: center; color: var(--muted); font-weight: 700; margin-top: 8px; }
+
+  /* ── MINI CHAT / REACTIONS ── */
+  .reactions-bar {
+    display: flex; gap: 6px; justify-content: center;
+    margin: 8px 0;
+  }
+  .react-btn {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 12px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  .react-btn:active { transform: scale(1.4); }
+
+  .floating-reaction {
+    position: fixed;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 500;
+    animation: float-up 1.5s ease-out forwards;
+  }
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(-200px) scale(1.5); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════════════ HOME ════════════════ -->
+  <div id="home-screen" class="screen active">
+    <div class="logo">QuizBlast</div>
+    <div class="tagline">🎉 派对答题 · 多人实时 · 笑翻全场</div>
+
+    <div class="card">
+      <div class="card-title">🎮 创建房间 (Host)</div>
+      <div class="form-group">
+        <label>你的昵称</label>
+        <input id="host-name" placeholder="输入你的名字" maxlength="16">
+      </div>
+      <div class="form-group">
+        <label>游戏模式</label>
+        <div class="mode-grid">
+          <button class="mode-btn active" data-mode="standard" onclick="selectMode(this)">
+            <span class="mode-icon">🎯</span>标准模式
+          </button>
+          <button class="mode-btn" data-mode="bar" onclick="selectMode(this)">
+            <span class="mode-icon">🍻</span>酒吧模式
+          </button>
+          <button class="mode-btn" data-mode="random" onclick="selectMode(this)">
+            <span class="mode-icon">🤪</span>随机模式
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>题目数量</label>
+        <select id="q-count">
+          <option value="5">5题（快速）</option>
+          <option value="10" selected>10题（标准）</option>
+          <option value="15">15题（挑战）</option>
+          <option value="20">20题（马拉松）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>每题时间</label>
+        <select id="q-time">
+          <option value="10">10秒（闪电）</option>
+          <option value="15" selected>15秒（正常）</option>
+          <option value="20">20秒（慢悠悠）</option>
+          <option value="30">30秒（思考型）</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="createRoom()">🏠 创建房间</button>
+
+      <div class="divider">OR</div>
+
+      <div class="card-title">🚪 加入房间 (Player)</div>
+      <div class="form-group">
+        <label>你的昵称</label>
+        <input id="player-name" placeholder="输入你的名字" maxlength="16">
+      </div>
+      <div class="form-group">
+        <label>房间码</label>
+        <input id="room-code-input" placeholder="4位数字房间码" maxlength="4" style="text-transform:uppercase;letter-spacing:10px;font-size:1.5rem;text-align:center" inputmode="numeric" pattern="[0-9]*">
+      </div>
+      <button class="btn btn-secondary" onclick="joinRoom()">🚪 加入游戏</button>
+    </div>
+
+    <div style="margin-top:16px; color:var(--muted); font-size:.8rem; text-align:center;">
+      💡 在同一设备多个标签页测试多人模式
+    </div>
+  </div>
+
+  <!-- ════════════════ LOBBY ════════════════ -->
+  <div id="lobby-screen" class="screen">
+    <div class="card" style="max-width:500px;width:100%;">
+      <div class="room-code-display">
+        <div class="label">📱 房间码 — 分享给朋友</div>
+        <div class="code" id="display-room-code">------</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <span class="pill">🎯 <span id="lobby-mode-label">标准</span></span>
+        <span class="pill">❓ <span id="lobby-q-count">10</span>题</span>
+        <span class="pill">⏱ <span id="lobby-q-time">15</span>秒/题</span>
+      </div>
+
+      <div class="card-title">👥 玩家 (<span id="player-count">0</span>)</div>
+      <div class="players-grid" id="players-grid"></div>
+
+      <div id="host-controls" style="display:none;">
+        <div style="color:var(--muted);font-size:.85rem;margin-bottom:12px;">
+          等待所有玩家加入后开始游戏（最少1人）
+        </div>
+        <button class="btn btn-green" id="start-btn" onclick="startGame()" disabled>
+          🚀 开始游戏
+        </button>
+      </div>
+      <div id="player-waiting" style="display:none;">
+        <div class="waiting-text">等待房主开始游戏...</div>
+        <div class="waiting-dots"><span></span><span></span><span></span></div>
+      </div>
+      <button class="btn btn-secondary btn-small" style="width:auto;margin-top:8px;" onclick="leaveGame()">← 离开</button>
+    </div>
+  </div>
+
+  <!-- ════════════════ QUESTION ════════════════ -->
+  <div id="game-screen" class="screen" style="justify-content:flex-start;padding:0;">
+    <div class="game-header">
+      <div class="q-progress">第 <span id="q-current">1</span>/<span id="q-total">10</span> 题</div>
+      <div class="timer-ring" id="timer-ring">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle class="bg" cx="45" cy="45" r="37"/>
+          <circle class="fg" id="timer-circle" cx="45" cy="45" r="37"
+            stroke-dasharray="232.5" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-number" id="timer-number">15</div>
+      </div>
+      <div class="score-badge">⭐ <span id="my-score">0</span></div>
+    </div>
+
+    <div style="width:100%;max-width:600px;padding:16px;display:flex;flex-direction:column;align-items:center;flex:1;">
+      <div class="question-card" id="question-card">
+        <div class="question-category" id="q-category">常识</div>
+        <div class="question-text" id="q-text">加载题目中...</div>
+        <div class="answer-count" id="answer-count" style="display:none;"></div>
+      </div>
+
+      <div class="options-grid" id="options-grid"></div>
+
+      <div id="result-area"></div>
+
+      <div class="reactions-bar">
+        <button class="react-btn" onclick="sendReaction('😂')">😂</button>
+        <button class="react-btn" onclick="sendReaction('🔥')">🔥</button>
+        <button class="react-btn" onclick="sendReaction('😱')">😱</button>
+        <button class="react-btn" onclick="sendReaction('👀')">👀</button>
+        <button class="react-btn" onclick="sendReaction('🎉')">🎉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════ INTERMISSION ════════════════ -->
+  <div id="inter-screen" class="screen">
+    <h2>📊 本题结果</h2>
+    <div id="inter-correct-answer" class="correct-answer-reveal" style="max-width:500px;width:100%;margin-bottom:16px;"></div>
+    <div class="leaderboard" id="inter-leaderboard"></div>
+    <div id="inter-next-info" style="text-align:center;color:var(--muted);font-weight:700;margin-top:12px;"></div>
+  </div>
+
+  <!-- ════════════════ FINAL ════════════════ -->
+  <div id="final-screen" class="screen">
+    <div class="trophy">🏆</div>
+    <h2 style="font-family:'Bangers',cursive;font-size:2.5rem;letter-spacing:2px;">游戏结束！</h2>
+    <div class="leaderboard" id="final-leaderboard" style="max-width:500px;width:100%;margin:16px 0;"></div>
+    <div style="width:100%;max-width:440px;">
+      <button class="btn btn-primary" onclick="playAgain()">🔄 再来一局</button>
+      <button class="btn btn-secondary" onclick="backToHome()">🏠 返回主页</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, onValue, off } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ═══════════════════════════════════════════════
+// ⚙️  Firebase 配置 — 填入你自己的配置
+//    注册教程见页面底部弹窗
+// ═══════════════════════════════════════════════
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBaOE7F6GH86BcyWdA1dxfhx1IviItbiGQ",
+  authDomain:        "quizblast-64512.firebaseapp.com",
+  databaseURL:       "https://quizblast-64512-default-rtdb.firebaseio.com",
+  projectId:         "quizblast-64512",
+  storageBucket:     "quizblast-64512.firebasestorage.app",
+  messagingSenderId: "838787306696",
+  appId:             "1:838787306696:web:2c760de48fcdda3fcb81fd"
+};
+
+// ── 检测是否已配置 ──
+const isConfigured = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
+
+let app, db;
+if (isConfigured) {
+  app = initializeApp(FIREBASE_CONFIG);
+  db  = getDatabase(app);
+}
+
+// ═══════════════════════════════════════════════
+// 全局状态
+// ═══════════════════════════════════════════════
+let me = { id:'', name:'', avatar:'', isHost:false, roomCode:'' };
+let roomListener = null;
+let gameTimer    = null;
+let lastPhase    = '';
+let lastQIndex   = -1;
+
+const AVATARS = ['🦊','🐱','🐶','🐸','🦄','🐯','🐺','🦋','🐙','🦁','🐻','🐼','🐨','🐵','🤖','👾','🧸','🐲'];
+const randAvatar = () => AVATARS[Math.floor(Math.random()*AVATARS.length)];
+const randId     = () => Math.random().toString(36).substr(2,9);
+const rand4      = () => String(Math.floor(1000+Math.random()*9000));
+
+// ── Firebase helpers ──
+function roomRef(code)    { return ref(db, 'rooms/' + code); }
+function setRoom(code, rs){ return set(roomRef(code), {...rs, updatedAt: Date.now()}); }
+async function getRoom(code){ const s=await get(roomRef(code)); return s.exists()?s.val():null; }
+
+function listenRoom(code, cb) {
+  if (roomListener) { off(roomListener.ref); }
+  const r = roomRef(code);
+  const unsub = onValue(r, snap => { if(snap.exists()) cb(snap.val()); });
+  roomListener = { ref: r, unsub };
+}
+function stopListen() {
+  if (roomListener) { off(roomListener.ref); roomListener = null; }
+}
+
+// ═══════════════════════════════════════════════
+// 配置检测 & 引导弹窗
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  if (!isConfigured) showSetupGuide();
+});
+
+function showSetupGuide() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;`;
+  overlay.innerHTML = `
+    <div style="background:#161628;border:2px solid #7c3aed;border-radius:20px;padding:28px;max-width:500px;width:100%;color:#f0f0ff;font-family:'Nunito',sans-serif;">
+      <div style="font-size:2rem;text-align:center;margin-bottom:8px">⚙️</div>
+      <h2 style="text-align:center;font-size:1.4rem;margin-bottom:16px;color:#ff4da6">首次使用：配置数据库</h2>
+      <p style="color:#8888aa;font-size:.9rem;margin-bottom:16px;line-height:1.6">需要配置 Firebase（免费）才能多人联机。按以下步骤操作：</p>
+      <ol style="color:#f0f0ff;font-size:.88rem;line-height:2;padding-left:20px;margin-bottom:20px;">
+        <li>打开 <a href="https://console.firebase.google.com" target="_blank" style="color:#00d4ff">console.firebase.google.com</a></li>
+        <li>点 <b>Create a project</b>，随便起个名字</li>
+        <li>进入项目 → 左侧 <b>Realtime Database</b> → <b>Create database</b></li>
+        <li>选 <b>Start in test mode</b>（免费测试模式）→ Enable</li>
+        <li>点左侧 <b>Project settings</b>（齿轮图标）→ 滚到底部 <b>Your apps</b> → 点 <b>&lt;/&gt;</b> 注册Web应用</li>
+        <li>复制 firebaseConfig 里的内容</li>
+        <li>用记事本打开 <b>quiz-party.html</b>，找到 <b>FIREBASE_CONFIG</b>，填入你的配置</li>
+        <li>保存文件，重新打开即可</li>
+      </ol>
+      <p style="color:#ffb800;font-size:.82rem;text-align:center">💡 只需配置一次，之后直接使用</p>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+
+// ═══════════════════════════════════════════════
+// 创建房间
+// ═══════════════════════════════════════════════
+window.createRoom = async function() {
+  if (!isConfigured) { showSetupGuide(); return; }
+  const name = document.getElementById('host-name').value.trim();
+  if (!name) { showToast('请输入你的名字！'); return; }
+
+  me.id = randId(); me.name = name; me.avatar = randAvatar();
+  me.isHost = true; me.roomCode = rand4();
+
+  const qCount = parseInt(document.getElementById('q-count').value);
+  const qTime  = parseInt(document.getElementById('q-time').value);
+  const mode   = document.querySelector('.mode-btn.active')?.dataset.mode || 'standard';
+
+  const rs = {
+    code: me.roomCode, phase:'lobby', mode, qCount, qTime,
+    players: { [me.id]: { id:me.id, name, avatar:me.avatar, score:0, isHost:true } },
+    questions:[], currentQ:0, questionStartTs:0, correctIndex:-1,
+  };
+
+  showToast('🔗 创建中...');
+  await setRoom(me.roomCode, rs);
+  listenRoom(me.roomCode, onRoomChange);
+  showLobbyUI(rs);
+  showToast('✅ 房间已创建！');
+}
+
+// ═══════════════════════════════════════════════
+// 加入房间
+// ═══════════════════════════════════════════════
+window.joinRoom = async function() {
+  if (!isConfigured) { showSetupGuide(); return; }
+  const name = document.getElementById('player-name').value.trim();
+  const code = document.getElementById('room-code-input').value.trim();
+  if (!name) { showToast('请输入你的名字！'); return; }
+  if (!/^\d{4}$/.test(code)) { showToast('请输入4位数字房间码！'); return; }
+
+  showToast('🔗 连接中...');
+  const rs = await getRoom(code);
+  if (!rs) { showToast('❌ 房间不存在，请检查房间码'); return; }
+  if (rs.phase !== 'lobby') { showToast('❌ 游戏已经开始'); return; }
+
+  me.id = randId(); me.name = name; me.avatar = randAvatar();
+  me.isHost = false; me.roomCode = code;
+
+  // 把自己写入房间
+  const players = rs.players || {};
+  players[me.id] = { id:me.id, name, avatar:me.avatar, score:0 };
+  await set(ref(db, `rooms/${code}/players`), players);
+
+  listenRoom(code, onRoomChange);
+  showToast('✅ 已加入房间！');
+}
+
+// ═══════════════════════════════════════════════
+// 房间状态变化 → 更新UI
+// ═══════════════════════════════════════════════
+function onRoomChange(rs) {
+  const phase = rs.phase;
+  const qIdx  = rs.currentQ;
+
+  if (phase === 'lobby') {
+    showLobbyUI(rs);
+  } else if (phase === 'question') {
+    if (phase !== lastPhase || qIdx !== lastQIndex) {
+      showQuestionUI(rs);
+    } else {
+      syncQuestionUI(rs);
+    }
+  } else if (phase === 'result' && lastPhase !== 'result') {
+    showResultUI(rs);
+  } else if (phase === 'final' && lastPhase !== 'final') {
+    showFinalUI(rs);
+  }
+
+  lastPhase  = phase;
+  lastQIndex = qIdx;
+}
+
+// ── 玩家列表转数组 ──
+function playersArr(rs) {
+  return Object.values(rs.players || {});
+}
+
+// ═══════════════════════════════════════════════
+// LOBBY UI
+// ═══════════════════════════════════════════════
+window.showLobbyUI = function(rs) {
+  showScreen('lobby-screen');
+  document.getElementById('display-room-code').textContent = rs.code || me.roomCode;
+  document.getElementById('lobby-q-count').textContent = rs.qCount;
+  document.getElementById('lobby-q-time').textContent  = rs.qTime;
+  const modeLabels = { standard:'标准', bar:'酒吧🍻', random:'随机🤪' };
+  document.getElementById('lobby-mode-label').textContent = modeLabels[rs.mode]||'标准';
+
+  const players = playersArr(rs);
+  document.getElementById('players-grid').innerHTML = players.map(p=>`
+    <div class="player-chip ${p.isHost?'host':''}">
+      <div class="avatar">${p.avatar||'😀'}</div>
+      <div>${p.name}${p.isHost?' 👑':''}</div>
+    </div>`).join('');
+  document.getElementById('player-count').textContent = players.length;
+
+  document.getElementById('host-controls').style.display  = me.isHost ? 'block' : 'none';
+  document.getElementById('player-waiting').style.display = me.isHost ? 'none'  : 'block';
+  if (me.isHost) document.getElementById('start-btn').disabled = players.length < 1;
+}
+
+window.selectMode = function(btn) {
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+// 题库
+// ═══════════════════════════════════════════════
+const QUESTION_BANK = {
+  standard: [
+    {q:"地球上最大的海洋是？",opts:["大西洋","太平洋","印度洋","北冰洋"],ans:1,cat:"地理"},
+    {q:"人体有多少块骨头？",opts:["106块","206块","306块","406块"],ans:1,cat:"科学"},
+    {q:"《蒙娜丽莎》是谁画的？",opts:["毕加索","米开朗基罗","达芬奇","拉斐尔"],ans:2,cat:"艺术"},
+    {q:"光速大约是多少？",opts:["30万km/s","3万km/s","300万km/s","30km/s"],ans:0,cat:"物理"},
+    {q:"水的化学式是？",opts:["H₂O₂","H₃O","H₂O","OH"],ans:2,cat:"化学"},
+    {q:"世界上最高的山峰是？",opts:["K2","乞力马扎罗","珠穆朗玛","洛子峰"],ans:2,cat:"地理"},
+    {q:"太阳系有几颗行星？",opts:["7颗","8颗","9颗","10颗"],ans:1,cat:"天文"},
+    {q:"人类有多少条染色体？",opts:["23条","44条","46条","48条"],ans:2,cat:"生物"},
+    {q:"世界上面积最大的国家是？",opts:["中国","美国","俄罗斯","加拿大"],ans:2,cat:"地理"},
+    {q:"哪个国家的国旗有枫叶？",opts:["澳大利亚","英国","加拿大","新西兰"],ans:2,cat:"常识"},
+    {q:"《哈利波特》的作者是？",opts:["J.R.R.托尔金","J.K.罗琳","斯蒂芬·金","迪士尼"],ans:1,cat:"文学"},
+    {q:"足球世界杯几年举办一次？",opts:["2年","3年","4年","5年"],ans:2,cat:"体育"},
+    {q:"人体最大的器官是？",opts:["肝脏","心脏","大脑","皮肤"],ans:3,cat:"生物"},
+    {q:"1GB等于多少MB？",opts:["100MB","512MB","1024MB","2048MB"],ans:2,cat:"科技"},
+    {q:"Darth Vader是谁的父亲？",opts:["卢克","莱娅","汉索洛","尤达"],ans:0,cat:"娱乐"},
+    {q:"世界上最小的国家是？",opts:["摩纳哥","列支敦士登","梵蒂冈","圣马力诺"],ans:2,cat:"地理"},
+    {q:"电流的单位是？",opts:["瓦特","焦耳","安培","欧姆"],ans:2,cat:"物理"},
+    {q:"月球距地球约多远？",opts:["3.8万公里","38万公里","380万公里","3800万公里"],ans:1,cat:"天文"},
+    {q:"2022年世界杯在哪里举办？",opts:["俄罗斯","卡塔尔","巴西","法国"],ans:1,cat:"体育"},
+    {q:"Python是哪种类型的语言？",opts:["机器语言","汇编语言","高级语言","自然语言"],ans:2,cat:"科技"},
+  ],
+  bar: [
+    {q:"最能表示社恐的行为是？",opts:["不接电话","取消计划","对话中盯着手机","以上全部"],ans:3,cat:"人生"},
+    {q:"喝多了第二天最难受的是？",opts:["头疼","口渴","后悔昨晚发的消息","翻白眼"],ans:2,cat:"派对"},
+    {q:"哪种行为最说明一个人喜欢你？",opts:["频繁回消息","假装无所谓","说你烦但不拉黑","经常说随便"],ans:0,cat:"恋爱"},
+    {q:"'随便'通常意味着？",opts:["真的随便","不随便","我有意见但懒得说","吃火锅"],ans:2,cat:"人生"},
+    {q:"最让人崩溃的邮件开头是？",opts:["Hi团队","请尽快处理","Hope this email finds you well","已抄送领导"],ans:2,cat:"职场"},
+    {q:"睡前最容易刷多久手机？",opts:["10分钟","30分钟","1小时","看时间结果3小时过去了"],ans:3,cat:"现代生活"},
+    {q:"最尴尬的社交场合是？",opts:["认错人","叫错名字","安静时放了个屁","被迫上台唱歌"],ans:2,cat:"社交"},
+    {q:"在酒吧最容易发生的事是？",opts:["认识新朋友","忘记明天上班","发现手机丢了","以上都是"],ans:3,cat:"派对"},
+    {q:"下班后最完美的活动是？",opts:["健身","学习","葛优躺","与朋友聚餐"],ans:2,cat:"生活"},
+    {q:"哪种借口最不被接受？",opts:["堵车","手机没电","忘了","猫把我关进屋里了"],ans:3,cat:"社交"},
+    {q:"聚会上最烦的人是？",opts:["一直讲冷笑话的","抢手机当DJ的","消失去打电话的","只吃不说话的"],ans:0,cat:"派对"},
+    {q:"发朋友圈最难写配文的是？",opts:["旅游照","美食照","自拍","运动打卡"],ans:2,cat:"社交"},
+  ],
+  random: [
+    {q:"猫推东西下桌子是因为？",opts:["好奇心","存在主义虚无","测试重力","以上都有可能"],ans:3,cat:"奇葩"},
+    {q:"如果你变成饼干最担心的是？",opts:["被吃掉","被泡软","没人选你","上述全部"],ans:3,cat:"搞笑"},
+    {q:"章鱼有几个心脏？",opts:["1个","2个","3个","8个"],ans:2,cat:"冷知识"},
+    {q:"最能代表选择困难症的情形？",opts:["选Netflix电影1小时","订外卖翻遍所有餐厅","买衣服对比50件","以上全是日常"],ans:3,cat:"生活"},
+    {q:"蜗牛有多少颗牙？",opts:["0颗","约20颗","约100颗","超过1000颗"],ans:3,cat:"冷知识"},
+    {q:"最难解释给外星人的是？",opts:["爱情","足球越位规则","中文声调","股票市场"],ans:1,cat:"奇葩"},
+    {q:"最能代表拖延症晚期的话？",opts:["等下再做","明天一定做","等状态来了","再玩最后一局就开始"],ans:3,cat:"生活"},
+    {q:"香蕉严格来说属于什么？",opts:["水果","草本植物","浆果","以上全是"],ans:3,cat:"冷知识"},
+    {q:"人一生平均睡多少年？",opts:["10年","26年","40年","5年"],ans:1,cat:"冷知识"},
+    {q:"外星人来访最可能问的是？",opts:["为什么还在战争","为什么发明了周一","猫是统治者吗","以上都是"],ans:3,cat:"奇葩"},
+  ]
+};
+
+// ═══════════════════════════════════════════════
+// 开始游戏
+// ═══════════════════════════════════════════════
+window.startGame = async function() {
+  if (!me.isHost) return;
+  const rs = await getRoom(me.roomCode);
+  if (!rs) return;
+
+  const mode = rs.mode;
+  const all = [
+    ...(QUESTION_BANK[mode]||[]),
+    ...Object.entries(QUESTION_BANK).filter(([k])=>k!==mode).flatMap(([,v])=>v)
+  ];
+  const seen=new Set(), qs=[];
+  all.sort(()=>Math.random()-.5).forEach(q=>{ if(!seen.has(q.q)){seen.add(q.q);qs.push(q);} });
+
+  // 重置所有玩家分数
+  const players = {};
+  Object.values(rs.players||{}).forEach(p => {
+    players[p.id] = {...p, score:0, _ans:-1, _pts:0};
+  });
+
+  await setRoom(me.roomCode, { ...rs,
+    phase:'question', questions:qs.slice(0,rs.qCount),
+    currentQ:0, questionStartTs:Date.now(), correctIndex:-1,
+    players,
+  });
+}
+
+// ═══════════════════════════════════════════════
+// 题目UI
+// ═══════════════════════════════════════════════
+function showQuestionUI(rs) {
+  const q = rs.questions?.[rs.currentQ];
+  if (!q) return;
+  showScreen('game-screen');
+  document.getElementById('q-current').textContent  = rs.currentQ+1;
+  document.getElementById('q-total').textContent    = rs.questions.length;
+  document.getElementById('q-category').textContent = q.cat||'常识';
+  document.getElementById('q-text').textContent     = q.q;
+  document.getElementById('result-area').innerHTML  = '';
+  document.getElementById('answer-count').style.display = 'none';
+
+  const me_p = (rs.players||{})[me.id];
+  document.getElementById('my-score').textContent = me_p?.score||0;
+
+  document.getElementById('options-grid').innerHTML = q.opts.map((opt,i)=>
+    `<button class="option-btn" onclick="submitAnswer(${i},this)">${opt}</button>`
+  ).join('');
+
+  clearGameTimer();
+  const elapsed   = (Date.now()-rs.questionStartTs)/1000;
+  const remaining = Math.max(0.5, rs.qTime-elapsed);
+  startTimerDisplay(remaining, rs.qTime);
+}
+
+function syncQuestionUI(rs) {
+  const players  = Object.values(rs.players||{});
+  const answered = players.filter(p=>p._ans>=0).length;
+  if (answered > 0) {
+    const el = document.getElementById('answer-count');
+    el.style.display = 'block';
+    el.textContent = `✅ ${answered}/${players.length} 人已答题`;
+  }
+  const me_p = (rs.players||{})[me.id];
+  if (me_p) document.getElementById('my-score').textContent = me_p.score||0;
+}
+
+// ═══════════════════════════════════════════════
+// 提交答案
+// ═══════════════════════════════════════════════
+window.submitAnswer = async function(index, btn) {
+  const rs = await getRoom(me.roomCode);
+  if (!rs || rs.phase!=='question') return;
+  const me_p = (rs.players||{})[me.id];
+  if (!me_p || me_p._ans >= 0) return;
+
+  const q       = rs.questions[rs.currentQ];
+  const elapsed = (Date.now()-rs.questionStartTs)/1000;
+  const correct = index===q.ans;
+  const pts     = correct ? 1000+Math.max(0,Math.floor((1-elapsed/rs.qTime)*500)) : 0;
+
+  btn.classList.add('selected');
+  document.querySelectorAll('.option-btn').forEach(b=>b.disabled=true);
+
+  // 写入答案
+  await set(ref(db,`rooms/${me.roomCode}/players/${me.id}`), {
+    ...me_p, _ans:index, _pts:pts, score:(me_p.score||0)+(correct?pts:0)
+  });
+
+  document.getElementById('my-score').textContent = (me_p.score||0)+(correct?pts:0);
+  document.getElementById('result-area').innerHTML = `
+    <div class="result-banner ${correct?'correct-banner':'wrong-banner'}">
+      <div class="big-icon">${correct?'🎉':'😅'}</div>
+      <div class="result-text">${correct?'答对了！':'没答对...'}</div>
+      ${correct?`<div class="points-gained">+${pts} 分</div>`:''}
+    </div>`;
+  if(correct) confetti();
+
+  // 房主检查是否所有人都答了
+  if (me.isHost) {
+    const latest = await getRoom(me.roomCode);
+    if (latest && Object.values(latest.players||{}).every(p=>p._ans>=0)) {
+      triggerResult(latest);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// 倒计时
+// ═══════════════════════════════════════════════
+function startTimerDisplay(remaining, total) {
+  const circle=document.getElementById('timer-circle');
+  const numEl=document.getElementById('timer-number');
+  let left=remaining;
+  const update=()=>{
+    const r=Math.max(0,left)/total;
+    circle.style.strokeDashoffset=232.5*(1-r);
+    numEl.textContent=Math.ceil(left);
+    circle.style.stroke=r>.5?'#00d4ff':r>.25?'#ffb800':'#ff3d57';
+    numEl.style.color=r<=.25?'#ff3d57':'var(--text)';
+  };
+  update();
+  clearGameTimer();
+  gameTimer=setInterval(async ()=>{
+    left-=0.3; update();
+    if(left<=0){
+      clearGameTimer();
+      if(me.isHost){
+        const rs=await getRoom(me.roomCode);
+        if(rs && rs.phase==='question') triggerResult(rs);
+      }
+    }
+  },300);
+}
+function clearGameTimer(){ if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
+
+// ═══════════════════════════════════════════════
+// 触发结果（房主）
+// ═══════════════════════════════════════════════
+async function triggerResult(rs) {
+  if(!rs||rs.phase!=='question'||!me.isHost) return;
+  await setRoom(me.roomCode,{...rs,
+    phase:'result',
+    correctIndex:rs.questions[rs.currentQ].ans
+  });
+}
+
+// ═══════════════════════════════════════════════
+// 结果UI
+// ═══════════════════════════════════════════════
+function showResultUI(rs) {
+  clearGameTimer();
+  const q = rs.questions?.[rs.currentQ];
+  if (!q) return;
+
+  document.querySelectorAll('.option-btn').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===rs.correctIndex) b.classList.add('correct');
+    else if(b.classList.contains('selected')) b.classList.add('wrong');
+  });
+
+  setTimeout(()=>{
+    showScreen('inter-screen');
+    document.getElementById('inter-correct-answer').textContent=`✅ 正确答案：${q.opts[rs.correctIndex]}`;
+
+    const sorted=Object.values(rs.players||{}).sort((a,b)=>b.score-a.score);
+    const medals=['🥇','🥈','🥉'];
+    document.getElementById('inter-leaderboard').innerHTML=sorted.map((p,i)=>`
+      <div class="lb-row">
+        <div class="lb-rank">${medals[i]||(i+1)}</div>
+        <div class="lb-avatar">${p.avatar||'😀'}</div>
+        <div class="lb-name">${p.name}${p.id===me.id?' (我)':''}</div>
+        <div class="lb-score">${p.score||0}</div>
+        ${p._pts?`<div class="lb-delta">+${p._pts}</div>`:''}
+      </div>`).join('');
+
+    const next=rs.currentQ+1;
+    document.getElementById('inter-next-info').textContent=
+      next<rs.questions.length?`下一题即将开始... (${next+1}/${rs.questions.length})`:'最后一题！即将公布最终结果...';
+
+    if(me.isHost) setTimeout(async()=>{
+      const latest=await getRoom(me.roomCode);
+      if(!latest) return;
+      const next2=latest.currentQ+1;
+      const players={};
+      Object.values(latest.players||{}).forEach(p=>{ players[p.id]={...p,_ans:-1,_pts:0}; });
+      if(next2>=latest.questions.length){
+        await setRoom(me.roomCode,{...latest,phase:'final',players});
+      } else {
+        await setRoom(me.roomCode,{...latest,
+          phase:'question',currentQ:next2,
+          questionStartTs:Date.now(),correctIndex:-1,players
+        });
+      }
+    },4000);
+  },1500);
+}
+
+// ═══════════════════════════════════════════════
+// 最终结果
+// ═══════════════════════════════════════════════
+function showFinalUI(rs) {
+  clearGameTimer();
+  showScreen('final-screen');
+  confetti(80);
+  const sorted=Object.values(rs.players||{}).sort((a,b)=>b.score-a.score);
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('final-leaderboard').innerHTML=sorted.map((p,i)=>`
+    <div class="lb-row">
+      <div class="lb-rank">${medals[i]||(i+1)}</div>
+      <div class="lb-avatar">${p.avatar||'😀'}</div>
+      <div class="lb-name">${p.name}${p.id===me.id?' (我)':''}</div>
+      <div class="lb-score">${p.score||0}</div>
+    </div>`).join('');
+}
+
+window.playAgain = async function() {
+  if(!me.isHost){showToast('等待房主重新开始...');return;}
+  const rs=await getRoom(me.roomCode);
+  if(!rs) return;
+  const players={};
+  Object.values(rs.players||{}).forEach(p=>{players[p.id]={...p,score:0,_ans:-1,_pts:0};});
+  await setRoom(me.roomCode,{...rs,phase:'lobby',questions:[],currentQ:0,players});
+}
+
+window.backToHome = function() { stopListen(); clearGameTimer(); me={id:'',name:'',avatar:'',isHost:false,roomCode:''}; lastPhase=''; lastQIndex=-1; showScreen('home-screen'); }
+window.leaveGame  = function() { stopListen(); clearGameTimer(); me={id:'',name:'',avatar:'',isHost:false,roomCode:''}; lastPhase=''; lastQIndex=-1; showScreen('home-screen'); }
+
+// ═══════════════════════════════════════════════
+// 反应 / 彩带 / 工具
+// ═══════════════════════════════════════════════
+window.sendReaction = function(emoji){ showFloatingReaction(emoji,Math.random()*80+10,80); }
+function showFloatingReaction(emoji,x,y){
+  const el=document.createElement('div');el.className='floating-reaction';el.textContent=emoji;
+  el.style.left=x+'%';el.style.bottom=y+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1500);
+}
+function confetti(count=30){
+  const colors=['#ff4da6','#7c3aed','#00d4ff','#ffb800','#00e676','#ff3d57'];
+  for(let i=0;i<count;i++) setTimeout(()=>{
+    const el=document.createElement('div');el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-20px;background:${colors[~~(Math.random()*6)]};transform:rotate(${Math.random()*360}deg);animation-duration:${1+Math.random()*2}s;width:${6+Math.random()*10}px;height:${6+Math.random()*10}px`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),3000);
+  },i*30);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+let toastTimeout;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+document.getElementById('room-code-input').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
+document.getElementById('player-name').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
+document.getElementById('host-name').addEventListener('keydown',e=>{if(e.key==='Enter')createRoom();});
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.btn');
+  if(btn&&!btn.disabled){btn.classList.remove('btn-ripple');void btn.offsetWidth;btn.classList.add('btn-ripple');setTimeout(()=>btn.classList.remove('btn-ripple'),400);}
+});
+</script>
+</body>
+</html>
